@@ -5,8 +5,6 @@ _A simple, maximally extensible, dependency minimized framework for building mod
 [![lerna](https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg)](https://lerna.js.org/)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
-[![Actions Status](https://github.com/harmony-one/harmony-react/workflows/CI/badge.svg)](https://github.com/harmony-one/harmony-react/actions)
-
 | Packages                              | `@latest` Version                                                                                                                                                         | Size                                                                                                                                                                                 | Description                                                                         |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | 🔌 **Connectors**                     |
