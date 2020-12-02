@@ -93,10 +93,10 @@
     "@types/bn.js" "^4.11.3"
     bn.js "^4.11.8"
 
-"@harmony-react/abstract-connector@^6.1.8-alpha.7":
-  version "6.1.8-alpha.7"
-  resolved "https://registry.yarnpkg.com/@harmony-react/abstract-connector/-/abstract-connector-6.1.8-alpha.7.tgz#87e4f4d8988a98eab43123b4fa5fd27f1fc66224"
-  integrity sha512-i5vBxsv6koP53PH1rSkZxM6LrE1vwMc3/hWceL5yZNqjo6+yXGRymagow3tfO/85lq/h/FemuxQKaCU5nabQaQ==
+"@harmony-react/abstract-connector@latest":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@harmony-react/abstract-connector/-/abstract-connector-0.0.3.tgz#42810e1496e9fb494c3a24487b28a31a5b5d5e66"
+  integrity sha512-uwubu6Cz1Sf93JoHF+EZS9EqbvQx3Z8uANjrfs4J6BC8a0J5jU6wBUaHmEeM0beJx5jIzfC42v8/JZWRnmthkg==
   dependencies:
     "@harmony-js/core" "^0.1.55"
     "@harmony-react/types" "^6.1.8-alpha.7"
