@@ -11,7 +11,7 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
 
   constructor({ supportedChainIds }: AbstractConnectorArguments = {}, windowKey: string) {
     super({ supportedChainIds: supportedChainIds })
-    this.windowKey = windowKey;
+    this.windowKey = windowKey
   }
 
   public async activate(): Promise<ConnectorUpdate> {
@@ -28,7 +28,7 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
     return this.generateProvider()
   }
 
-  protected generateProvider(): (Harmony | undefined) {
+  protected generateProvider(): Harmony | undefined {
     let network
     try {
       network = (window[this.windowKey] as any).network
@@ -48,13 +48,13 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
           chainType = ChainType.Harmony
           chainId = ChainID.HmyMainnet
           break
-  
+
         case 2:
           url = 'https://api.s0.b.hmny.io'
           chainType = ChainType.Harmony
           chainId = ChainID.HmyTestnet
           break
-  
+
         default:
           url = 'https://api.s0.t.hmny.io'
           chainType = ChainType.Harmony
@@ -63,7 +63,7 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
 
       harmony = new Harmony(url, {
         chainType: chainType,
-        chainId: chainId,
+        chainId: chainId
       })
     }
 
@@ -89,15 +89,14 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
     return this.retrieveAccount()
   }
 
-  public deactivate() {
-  }
+  public deactivate() {}
 
   public async close() {
     await (window[this.windowKey] as any).forgetIdentity()
     super.emitDeactivate()
   }
 
-  private async retrieveAccount() : Promise<null | string> {
+  private async retrieveAccount(): Promise<null | string> {
     if (!window[this.windowKey]) {
       throw new NoWalletProviderError()
     }
@@ -134,5 +133,28 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
     } catch {
       return false
     }
+  }
+
+  public async signTransaction(tx: any): Promise<any> {
+    return (window[this.windowKey] as any).signTransaction(tx)
+  }
+
+  public async attachToContract(contract: any): Promise<any> {
+    contract.wallet.createAccount()
+
+    if (contract.wallet.defaultSigner === '') {
+      contract.wallet.defaultSigner = await this.retrieveAccount()
+    }
+
+    contract.wallet.signTransaction = async (tx: any) => {
+      try {
+        tx.from = await this.retrieveAccount()
+        return await this.signTransaction(tx)
+      } catch (err) {
+        return Promise.reject(err)
+      }
+    }
+
+    return contract
   }
 }
