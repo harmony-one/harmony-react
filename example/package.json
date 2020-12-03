@@ -1,5 +1,6 @@
 {
   "name": "web3-react-example",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "start": "next",
     "build": "next build && next export"
