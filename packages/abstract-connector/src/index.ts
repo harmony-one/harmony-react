@@ -1,26 +1,27 @@
 import { AbstractConnector } from '@web3-react/abstract-connector'
-import { AbstractConnectorArguments, ConnectorUpdate } from '@web3-react/types'
+import { ConnectorUpdate } from '@web3-react/types'
 import { NoWalletProviderError, UserRejectedRequestError, WalletLockedError } from '@harmony-react/types'
 import { fromBech32 } from '@harmony-js/crypto'
 import { Harmony } from '@harmony-js/core'
 import { ChainID, ChainType } from '@harmony-js/utils'
 import warning from 'tiny-warning'
 
+export interface HarmonyAbstractConnectorArguments {
+  chainId: number
+  windowKey?: any
+}
 export abstract class HarmonyAbstractConnector extends AbstractConnector {
+  public readonly chainId: number
   public readonly windowKey?: any
 
-  constructor({ supportedChainIds }: AbstractConnectorArguments = {}, windowKey: string) {
-    super({ supportedChainIds: supportedChainIds })
+  constructor({ chainId, windowKey }: HarmonyAbstractConnectorArguments) {
+    super({ supportedChainIds: [chainId] })
+    this.chainId = chainId
     this.windowKey = windowKey
   }
 
   public async activate(): Promise<ConnectorUpdate> {
-    if (!window[this.windowKey]) {
-      throw new NoWalletProviderError()
-    }
-
     let account = await this.retrieveAccount()
-
     return { provider: this.generateProvider(), ...(account ? { account } : {}) }
   }
 
@@ -29,60 +30,40 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
   }
 
   protected generateProvider(): Harmony | undefined {
-    let network
-    try {
-      network = (window[this.windowKey] as any).network
-    } catch {
-      warning(false, `accessing window.${this.windowKey}.network was unsuccessful`)
+    let harmony: Harmony
+    let url
+    let chainId: ChainID
+    let chainType: ChainType
+
+    switch (this.chainId) {
+      case 1:
+        url = 'https://api.s0.t.hmny.io'
+        chainType = ChainType.Harmony
+        chainId = ChainID.HmyMainnet
+        break
+
+      case 2:
+        url = 'https://api.s0.b.hmny.io'
+        chainType = ChainType.Harmony
+        chainId = ChainID.HmyTestnet
+        break
+
+      default:
+        url = 'https://api.s0.t.hmny.io'
+        chainType = ChainType.Harmony
+        chainId = ChainID.HmyMainnet
     }
 
-    let harmony: Harmony | undefined
-    if (network && network.chain_id) {
-      let url
-      let chainId: ChainID
-      let chainType: ChainType
-
-      switch (network.chain_id) {
-        case 1:
-          url = 'https://api.s0.t.hmny.io'
-          chainType = ChainType.Harmony
-          chainId = ChainID.HmyMainnet
-          break
-
-        case 2:
-          url = 'https://api.s0.b.hmny.io'
-          chainType = ChainType.Harmony
-          chainId = ChainID.HmyTestnet
-          break
-
-        default:
-          url = 'https://api.s0.t.hmny.io'
-          chainType = ChainType.Harmony
-          chainId = ChainID.HmyMainnet
-      }
-
-      harmony = new Harmony(url, {
-        chainType: chainType,
-        chainId: chainId
-      })
-    }
+    harmony = new Harmony(url, {
+      chainType: chainType,
+      chainId: chainId
+    })
 
     return harmony
   }
 
   public async getChainId(): Promise<number | string> {
-    if (!window[this.windowKey]) {
-      throw new NoWalletProviderError()
-    }
-
-    let chainId
-    try {
-      chainId = (window[this.windowKey] as any).network.chain_id
-    } catch {
-      warning(false, `accessing window.${this.windowKey}.network.chain_id was unsuccessful`)
-    }
-
-    return chainId
+    return this.chainId
   }
 
   public async getAccount(): Promise<null | string> {
@@ -92,19 +73,17 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
   public deactivate() {}
 
   public async close() {
-    await (window[this.windowKey] as any).forgetIdentity()
+    const windowObject = await this.getWindowObject()
+    await windowObject.forgetIdentity()
     super.emitDeactivate()
   }
 
   private async retrieveAccount(): Promise<null | string> {
-    if (!window[this.windowKey]) {
-      throw new NoWalletProviderError()
-    }
-
+    const windowObject = await this.getWindowObject()
     let account: null | string = null
 
     try {
-      account = await (window[this.windowKey] as any).getAccount().then((acc: any): string => fromBech32(acc.address))
+      account = await windowObject.getAccount().then((acc: any): string => fromBech32(acc.address))
     } catch (error) {
       if (error.message === 'User rejected the provision of an Identity') {
         throw new UserRejectedRequestError()
@@ -117,8 +96,39 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
     return account
   }
 
+  private timeout(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  private async hasWindowObject(): Promise<boolean> {
+    var windowObject = window[this.windowKey]
+
+    if (!windowObject) {
+      await this.timeout(500)
+      windowObject = window[this.windowKey]
+    }
+
+    const hasObject = windowObject ? true : false
+
+    return hasObject
+  }
+
+  private async getWindowObject(): Promise<any> {
+    const hasWindowObject = await this.hasWindowObject()
+    var windowObject
+
+    if (hasWindowObject) {
+      windowObject = window[this.windowKey] as any
+    } else {
+      throw new NoWalletProviderError()
+    }
+
+    return windowObject
+  }
+
   public async isAuthorized(): Promise<boolean> {
-    if (!window[this.windowKey]) {
+    const hasWindowObject = await this.hasWindowObject()
+    if (!hasWindowObject) {
       return false
     }
 
@@ -136,7 +146,8 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
   }
 
   public async signTransaction(tx: any): Promise<any> {
-    return (window[this.windowKey] as any).signTransaction(tx)
+    const windowObject = await this.getWindowObject()
+    return windowObject.signTransaction(tx)
   }
 
   public async attachToContract(contract: any): Promise<any> {

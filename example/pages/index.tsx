@@ -179,7 +179,7 @@ function BlockNumber() {
 function Account() {
   var { account, library } = useWeb3React()
   const isHmyLibrary = (library?.messenger?.chainType === 'hmy')
-  account = isHmyLibrary ? toBech32(account) : account
+  account = (isHmyLibrary && account) ? toBech32(account) : account
 
   return (
     <>

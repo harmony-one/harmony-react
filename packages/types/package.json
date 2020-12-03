@@ -33,5 +33,8 @@
     "build": "tsdx build",
     "lint": "tsdx lint src"
   },
+  "devDependencies": {
+    "tsdx": "latest"
+  },
   "license": "GPL-3.0-or-later"
 }

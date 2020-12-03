@@ -70,6 +70,6 @@ export const squarelink = new SquarelinkConnector({
 
 export const torus = new TorusConnector({ chainId: 1 })
 
-export const onewallet = new OneWalletConnector({ supportedChainIds: [1, 2] })
+export const onewallet = new OneWalletConnector({ chainId: 1 })
 
-export const mathwallet = new MathWalletConnector({ supportedChainIds: [1, 2] })
+export const mathwallet = new MathWalletConnector({ chainId: 1 })
