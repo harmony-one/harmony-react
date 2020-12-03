@@ -13,6 +13,8 @@ export interface HarmonyAbstractConnectorArguments {
 export abstract class HarmonyAbstractConnector extends AbstractConnector {
   public readonly chainId: number
   public readonly windowKey?: any
+  public address?: string
+  public bech32Address?: string
 
   constructor({ chainId, windowKey }: HarmonyAbstractConnectorArguments) {
     super({ supportedChainIds: [chainId] })
@@ -75,22 +77,34 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
   public async close() {
     const windowObject = await this.getWindowObject()
     await windowObject.forgetIdentity()
+    this.bech32Address = undefined
+    this.address = undefined
     super.emitDeactivate()
   }
 
   private async retrieveAccount(): Promise<null | string> {
-    const windowObject = await this.getWindowObject()
     let account: null | string = null
 
-    try {
-      account = await windowObject.getAccount().then((acc: any): string => fromBech32(acc.address))
-    } catch (error) {
-      if (error.message === 'User rejected the provision of an Identity') {
-        throw new UserRejectedRequestError()
-      } else if (error.message === 'The wallet has been locked and needs to be unlocked for further operation!') {
-        throw new WalletLockedError()
+    if (this.address) {
+      account = this.address
+    } else {
+      try {
+        const windowObject = await this.getWindowObject()
+        account = await windowObject.getAccount().then((acc: any): string => acc.address)
+
+        if (account) {
+          this.bech32Address = account
+          this.address = fromBech32(account)
+          account = this.address
+        }
+      } catch (error) {
+        if (error.message === 'User rejected the provision of an Identity') {
+          throw new UserRejectedRequestError()
+        } else if (error.message === 'The wallet has been locked and needs to be unlocked for further operation!') {
+          throw new WalletLockedError()
+        }
+        warning(false, 'retrieveAccount was unsuccessful')
       }
-      warning(false, 'retrieveAccount was unsuccessful')
     }
 
     return account
@@ -100,26 +114,14 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
-  private async hasWindowObject(): Promise<boolean> {
+  private async getWindowObject(): Promise<any> {
     var windowObject = window[this.windowKey]
-
     if (!windowObject) {
       await this.timeout(500)
       windowObject = window[this.windowKey]
     }
 
-    const hasObject = windowObject ? true : false
-
-    return hasObject
-  }
-
-  private async getWindowObject(): Promise<any> {
-    const hasWindowObject = await this.hasWindowObject()
-    var windowObject
-
-    if (hasWindowObject) {
-      windowObject = window[this.windowKey] as any
-    } else {
+    if (!windowObject) {
       throw new NoWalletProviderError()
     }
 
@@ -127,22 +129,7 @@ export abstract class HarmonyAbstractConnector extends AbstractConnector {
   }
 
   public async isAuthorized(): Promise<boolean> {
-    const hasWindowObject = await this.hasWindowObject()
-    if (!hasWindowObject) {
-      return false
-    }
-
-    try {
-      return await this.retrieveAccount().then((account: null | string) => {
-        if (account) {
-          return true
-        } else {
-          return false
-        }
-      })
-    } catch {
-      return false
-    }
+    return this.address !== undefined && this.address !== null && this.address !== ''
   }
 
   public async signTransaction(tx: any): Promise<any> {
