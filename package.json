@@ -22,9 +22,11 @@
     "squarelink",
     "torus",
     "authereum",
-    "magic"
+    "magic",
+    "mathwallet",
+    "onewallet"
   ],
-  "author": "Noah Zinsmeister <noahwz@gmail.com>",
+  "author": "Harmony <hello@harmony.one>",
   "repository": {
     "type": "git",
     "url": "git://github.com/harmony-one/harmony-react.git"
